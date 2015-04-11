@@ -14,7 +14,9 @@ var sql = "set @center=point(?, ?);" +
 " X(@center) - @radius, ' ', Y(@center) + @radius, ',', " +
 " X(@center) - @radius, ' ', Y(@center) - @radius, '))' " +
 " ); " +
-" SELECT AsText(location), boro, sign_desc, SQRT(POW( ABS( X(location) - X(@center)), 2) + POW( ABS(Y(location) - Y(@center)), 2 )) AS distance " +
+" SELECT " +
+    "X(location) as x, Y(location) as y, boro, sign_desc, " +
+    "SQRT(POW( ABS( X(location) - X(@center)), 2) + POW( ABS(Y(location) - Y(@center)), 2 )) AS distance " +
 " FROM nyparking_signs " +
 " WHERE Intersects(location, GeomFromText(@bbox) ) " +
 " AND SQRT(POW( ABS( X(location) - X(@center)), 2) + POW( ABS(Y(location) - Y(@center)), 2 )) < @radius " +
@@ -48,7 +50,12 @@ function getSigns(x, y, radius, callback) {
         }
 
         //console.log("rows ", rows.splice(3)[0]);
-        callback(rows.splice(3)[0]);
+        var ret;
+        if (rows === undefined || rows.length === 0)
+            ret = [];
+        else
+            ret = rows.splice(3)[0];
+        callback(ret);
     });
 
 }
