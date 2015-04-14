@@ -1,42 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="stylesheet" type="text/css" href="css/map.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
-    <link rel="stylesheet" type="text/css" href="css/map.css">
 </head>
 
 <body ng-app="myApp">
 
-        <!--
-        <div class="full_map" id="search_map">
-            <div id="map-canvas" ng-controller="MainCtrl" style="width:100%; height:100%"></div>
-        </div>
-        -->
-
-    <div class="container">
-        <div class="row">
-        <div class="col-md-3" no-float>
-
-                Hello, Yin! This is a test. test Yin! This is a test. testYin! This is a test. testYin! This is a test. testYin! This is a test. test
-        </div>
-        <div class="col-md-9" no-float>
+        <div class="container">
+            <h1>NYC Parking Information</h1>
             <div id="map-canvas" ng-controller="MainCtrl"></div>
         </div>
+
+
+        <div class="container">
+            <div class="row">
+                <hr>
+            </div>
+            <div class="row">
+                <div ng-controller="ChatCtrl">
+                    <div class="col-sm-6">
+                        <ul class="messages">
+                            <li ng-repeat="chat in chats track by $index" class="messages">
+                                {{chat}}
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <form novalidate class="simple-form" ng-submit="submit()">
+                            <input id="chats" type="text" autocomplete="off" ng-model="msg" />
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <hr>
+            </div>
         </div>
-    </div>
 
-
-
-
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-resource.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-route.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&extension=.js&signed_in=true"></script>
-    <script src="javascripts/map.js"></script>
-    <script src="javascripts/resource.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 </body>
-
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&extension=.js&signed_in=true"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-resource.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-route.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="javascripts/map.js"></script>
+<script src="javascripts/resource.js"></script>
 </html>

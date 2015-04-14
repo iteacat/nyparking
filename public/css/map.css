@@ -1,43 +1,9 @@
-*
-{
-    margin:0;padding:0;
-}
-html,body,.container
-{
-    height:100%;
-    width: 100%;
-    font-family: "Courier New", Monospace;
-    font-size: 1.25em;
-    color: black;
-}
-
-.container
-{
-    display:table;
-    width: 100%;
-    margin-top: -50px;
-    padding-top: 50px;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-}
-
-.row
-{
+html, body, #map-canvas{
     height: 100%;
-    display: table-row;
+    width: 100%;
 }
-.col-md-3.no-float, .col-md-9.no-float {
-    float: none; /* thanks baxabbit */
+
+#map-canvas {
+    height:		550px;
 }
-.col-md-3
-{
-    display: table-cell;
-    background: pink;
-    width: 25%;
-}
-.col-md-9
-{
-    display: table-cell;
-    background: yellow;
-    width: 75%;
-}
+

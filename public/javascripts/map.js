@@ -98,16 +98,18 @@ mapModule.factory('initMap', function($resource) {
     }
 
     return function() {
-        $(window).resize(function () {
+        $(document).ready(function () {
+            /*
             var h = $(window).height(),
                 offsetTop = 60; // Calculate the top offset
 
-            $('#map-canvas').css('height', (h - offsetTop));
+            $('#map-canvas').css('height', (h));
             $('#map-canvas').css('width', '100%');
             $('#map-canvas').css('padding', '0px');
             $('#map-canvas').css('margin', '0px');
             $('#map-canvas').css('float', 'left');
-        }).resize();
-        initialize();
+            */
+            initialize();
+        });
     }
 });
