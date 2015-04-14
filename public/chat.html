@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+    <title>Socket.IO chat</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font: 13px Helvetica, Arial; }
+        .simple-form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+        #chats { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+        #submit { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+        #messages { list-style-type: none; margin: 0; padding: 0; }
+        #messages li { padding: 5px 10px; }
+        #messages li:nth-child(odd) { background: #eee; }
+    </style>
+</head>
+
+<body>
+
+<div ng-app="msgModule" ng-controller="msgCtrl">
+    <ul class="messages">
+        <li ng-repeat="chat in chats track by $index" class="messages">
+            {{chat}}
+        </li>
+    </ul>
+
+    <form novalidate class="simple-form">
+        <input id="chats" type="text" autocomplete="off" ng-model="msg" />
+        <input id="submit" type="submit" ng-click="submit()" value="Send" />
+    </form>
+</div>
+
+</body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.0-rc.0/angular.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script> var socket = io()</script>
+<script>
+    angular.module('msgModule',[])
+            .controller('msgCtrl', ['$scope', function($scope) {
+                $scope.msg = '';
+                $scope.chats = [];
+
+                socket.on('new msg', function(text) {
+                    $scope.chats.push(text);
+                    $scope.$apply();
+                    console.log('received new msg: ', $scope.chats);
+                });
+                $scope.submit = function() {
+                    console.log('sending msg: ', $scope.msg);
+                    socket.emit('new msg', $scope.msg);
+                    $scope.msg = '';
+                };
+            }]);
+</script>
+</html>

@@ -13,4 +13,13 @@ router.get('/', function(req, res, next) {
     res.sendfile('public/map.html');
 });
 
+router.get('/test', function(req, res, next) {
+    res.sendfile('public/map-test.html');
+});
+
+router.get('/chat', function(req, res, next) {
+    res.sendfile('public/chat.html');
+});
+
+
 module.exports = router;

@@ -1,12 +1,15 @@
 /**
  * Created by yin on 4/6/15.
  */
+
 var mapModule = angular.module('mapModule', ['ngResource']);
 
 mapModule.factory('initMap', function($resource) {
 
     var myLatLng = { lat: 40.739648, lng: -73.9993346 };
     var map = null;
+    var infoWins = [];
+    var markers = [];
 
     function getSigns(location) {
         var rsc = $resource("/signs.json/:lat/:lng");
@@ -33,9 +36,15 @@ mapModule.factory('initMap', function($resource) {
             google.maps.event.addListener(marker, 'click', function() {
                 if (infoWindow.getMap())
                     infoWindow.close();
-                else
+                else {
+                    infoWins.forEach(function(infoWin) {
+                        infoWin.close();
+                    });
                     infoWindow.open(map, marker);
+                }
             });
+            infoWins.push(infoWindow);
+            markers.push(marker);
         });
 
     }
@@ -80,9 +89,25 @@ mapModule.factory('initMap', function($resource) {
                 getSigns({lat: loc.lat(), lng: loc.lng()});
             }, 0);
         });
+
+        google.maps.event.addListener(map, 'click', function() {
+            infoWins.forEach(function(infoWin) {
+                infoWin.close();
+            });
+        });
     }
 
     return function() {
+        $(window).resize(function () {
+            var h = $(window).height(),
+                offsetTop = 60; // Calculate the top offset
+
+            $('#map-canvas').css('height', (h - offsetTop));
+            $('#map-canvas').css('width', '100%');
+            $('#map-canvas').css('padding', '0px');
+            $('#map-canvas').css('margin', '0px');
+            $('#map-canvas').css('float', 'left');
+        }).resize();
         initialize();
     }
 });
