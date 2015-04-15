@@ -23,15 +23,25 @@
             <div class="col-sm-6">
                 <ul class="list-unstyled">
                     <li ng-repeat="chat in chats track by $index" class="messages">
-                        {{chat}}
+                        <mark>{{chat.id}}</mark> <time>{{chat.time}}</time> {{chat.msg}}
                     </li>
                 </ul>
             </div>
 
             <div class="col-sm-6">
-                <p>Share your parking information: </p>
-                <form novalidate class="simple-form" ng-submit="submit()">
-                    <input id="chatInput" type="text" autocomplete="off" ng-model="msg" />
+                <form novalidate name="chatForm" class="simple-form" ng-submit="chatForm.$valid && submit()">
+                    <p>
+                        User name: <input id="userNameInput" type="text" autocomplete="off" ng-model="userName" required maxlength="16"/>
+                    </p>
+                    <p>Share your parking information: </p>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <input id="chatInput" type="text" autocomplete="off" ng-model="msg" required maxlength="140"/>
+                        </div>
+                        <div class="col-sm-2">
+                            <button id="chatButton">GO</button>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>

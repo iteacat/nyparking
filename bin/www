@@ -34,11 +34,11 @@ server.on('error', onError);
 server.on('listening', onListening);
 
 io.on('connection', function(socket) {
-  socket.on('new msg', function(msg) {
-      msg = moment().format('MMM Do HH:mm:ss: ') + msg;
-      chatDao.addChat(msg);
-      console.log('broadcast: ', msg);
-      io.sockets.emit('new msg', msg);
+  socket.on('new msg', function(data) {
+      data.time = moment().format('MMM Do HH:mm:ss:');
+      chatDao.addChat(data);
+      console.log('broadcast: ', data);
+      io.sockets.emit('new msg', data);
   });
 });
 
