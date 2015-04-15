@@ -15,16 +15,7 @@ router.get('/chats.json', function(req, res, next) {
 });
 
 router.get('/', function(req, res, next) {
-    res.sendfile('public/mapchat.html');
+    res.sendFile('public/mapchat.html', { root: './' });
 });
-
-router.get('/test', function(req, res, next) {
-    res.sendfile('public/mapchat.html');
-});
-
-router.get('/chat', function(req, res, next) {
-    res.sendfile('public/chat.html');
-});
-
 
 module.exports = router;
