@@ -4,12 +4,17 @@
 
 var mapModule = angular.module('mapModule', ['ngResource']);
 
+mapModule.factory('chatRsc', function($resource) {
+    return $resource("/chats.json");
+});
+
 mapModule.factory('initMap', function($resource) {
 
     var myLatLng = { lat: 40.739648, lng: -73.9993346 };
     var map = null;
     var infoWins = [];
     var markers = [];
+    var chatHistory = []
 
     function getSigns(location) {
         var rsc = $resource("/signs.json/:lat/:lng");

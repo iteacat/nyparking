@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var dao = require('../dao/sign_dao.js');
+var chatDao = require('../dao/chat_dao.js');
 
 /* GET home page. */
 router.get('/signs.json/:lat/:lng', function(req, res, next) {
@@ -9,12 +10,16 @@ router.get('/signs.json/:lat/:lng', function(req, res, next) {
     });
 });
 
+router.get('/chats.json', function(req, res, next) {
+    res.json({'chats' : chatDao.chats});
+});
+
 router.get('/', function(req, res, next) {
-    res.sendfile('public/map.html');
+    res.sendfile('public/mapchat.html');
 });
 
 router.get('/test', function(req, res, next) {
-    res.sendfile('public/map-test.html');
+    res.sendfile('public/mapchat.html');
 });
 
 router.get('/chat', function(req, res, next) {

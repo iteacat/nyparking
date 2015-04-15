@@ -7,13 +7,19 @@ app.controller("MainCtrl", function(initMap) {
     initMap();
 });
 
-app.controller("ChatCtrl", ['$scope', function($scope) {
+app.controller("ChatCtrl", ['$scope', 'chatRsc', function($scope, chatRsc) {
     var socket = io();
     $scope.msg = '';
-    $scope.chats = [];
+    chatRsc.get(function(data) {
+        $scope.chats = data.chats;
+    });
+    $scope.CHAT_LEN = 100;
 
     socket.on('new msg', function (text) {
-        $scope.chats.push(text);
+        $scope.chats.unshift(text);
+        while ($scope.CHAT_LEN < $scope.chats.length) {
+            $scope.chats.pop();
+        }
         $scope.$apply();
         console.log('received new msg: ', $scope.chats);
     });

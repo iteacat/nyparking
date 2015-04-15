@@ -7,12 +7,15 @@
 var app = require('../app');
 var debug = require('debug')('nyparking:server');
 var http = require('http');
+var chatDao = require('../dao/chat_dao.js');
+var moment = require('moment');
+
 
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(process.env.PORT || process.argv[2] || '3000');
 app.set('port', port);
 
 /**
@@ -32,6 +35,8 @@ server.on('listening', onListening);
 
 io.on('connection', function(socket) {
   socket.on('new msg', function(msg) {
+      msg = moment().format('MMM Do HH:mm:ss: ') + msg;
+      chatDao.addChat(msg);
       console.log('broadcast: ', msg);
       io.sockets.emit('new msg', msg);
   });

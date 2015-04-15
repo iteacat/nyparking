@@ -8,37 +8,38 @@
 
 <body ng-app="myApp">
 
-        <div class="container">
-            <h1>NYC Parking Information</h1>
-            <div id="map-canvas" ng-controller="MainCtrl"></div>
-        </div>
+<div class="container">
+    <h1>NYC Parking Information</h1>
+    <div id="map-canvas" ng-controller="MainCtrl"></div>
+</div>
 
 
-        <div class="container">
-            <div class="row">
-                <hr>
+<div class="container">
+    <div class="row">
+        <hr>
+    </div>
+    <div class="row">
+        <div ng-controller="ChatCtrl">
+            <div class="col-sm-6">
+                <ul class="list-unstyled">
+                    <li ng-repeat="chat in chats track by $index" class="messages">
+                        {{chat}}
+                    </li>
+                </ul>
             </div>
-            <div class="row">
-                <div ng-controller="ChatCtrl">
-                    <div class="col-sm-6">
-                        <ul class="messages">
-                            <li ng-repeat="chat in chats track by $index" class="messages">
-                                {{chat}}
-                            </li>
-                        </ul>
-                    </div>
 
-                    <div class="col-sm-6">
-                        <form novalidate class="simple-form" ng-submit="submit()">
-                            <input id="chats" type="text" autocomplete="off" ng-model="msg" />
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <hr>
+            <div class="col-sm-6">
+                <p>Share your parking information: </p>
+                <form novalidate class="simple-form" ng-submit="submit()">
+                    <input id="chatInput" type="text" autocomplete="off" ng-model="msg" />
+                </form>
             </div>
         </div>
+    </div>
+    <div class="row">
+        <hr>
+    </div>
+</div>
 
 </body>
 <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&extension=.js&signed_in=true"></script>

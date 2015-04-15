@@ -7,3 +7,19 @@ html, body, #map-canvas{
     height:		550px;
 }
 
+.chatInput {
+
+}
+
+.col-sm-6 {
+    height: 180px;
+    overflow: scroll;
+}
+
+ul li {
+    word-break: break-all;
+}
+
+#chatInput {
+    width: 100%;
+}
