@@ -18,7 +18,7 @@ app.controller("ChatCtrl", ['$scope', 'chatRsc', function($scope, chatRsc) {
     $scope.CHAT_LEN = 100;
 
     socket.on('new msg', function (data) {
-        data.time = moment(data.time).tz(localTz).format('MMM Do h:mm:ss a ');
+        data.time = moment().tz(localTz).format('MMM Do h:mm:ss a ');
         $scope.chats.unshift(data);
         while ($scope.CHAT_LEN < $scope.chats.length) {
             $scope.chats.pop();
