@@ -9,6 +9,7 @@ app.controller("MainCtrl", function(initMap) {
 
 app.controller("ChatCtrl", ['$scope', 'chatRsc', function($scope, chatRsc) {
     var socket = io();
+    var timezone = jstz.determine().name();
     $scope.msg = '';
     $scope.userName = 'anonymous';
     chatRsc.get(function(data) {
@@ -17,6 +18,7 @@ app.controller("ChatCtrl", ['$scope', 'chatRsc', function($scope, chatRsc) {
     $scope.CHAT_LEN = 100;
 
     socket.on('new msg', function (data) {
+        data.time = moment(data.time, 'MMM Do HH:mm:ss').tz(timezone).format('MMM Do h:mm:ss a ');
         $scope.chats.unshift(data);
         while ($scope.CHAT_LEN < $scope.chats.length) {
             $scope.chats.pop();

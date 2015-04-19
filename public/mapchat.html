@@ -23,7 +23,7 @@
             <div class="col-sm-6">
                 <ul class="list-unstyled">
                     <li ng-repeat="chat in chats track by $index" class="messages">
-                        <mark>{{chat.id}}</mark> <time>{{chat.time}}</time> {{chat.msg}}
+                        <mark>{{chat.id}}</mark> <time>{{chat.time}}</time> <mark>{{chat.msg}}</mark>
                     </li>
                 </ul>
             </div>
@@ -61,4 +61,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="javascripts/map.js"></script>
 <script src="javascripts/resource.js"></script>
+<script src="javascripts/lib/moment.min.js"></script>
+<script src="javascripts/lib/moment-timezone.min.js"></script>
+<script src="javascripts/lib/jstz-1.0.4.min.js"></script>
 </html>
