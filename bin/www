@@ -35,7 +35,7 @@ server.on('listening', onListening);
 
 io.on('connection', function(socket) {
   socket.on('new msg', function(data) {
-      data.time = moment().format('MMM Do HH:mm:ss');
+      data.time = moment.utc();
       chatDao.addChat(data);
       console.log('broadcast: ', data);
       io.sockets.emit('new msg', data);
