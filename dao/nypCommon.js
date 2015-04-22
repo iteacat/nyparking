@@ -26,7 +26,7 @@ exports.dbConfigDev = {
 };
 
 var pool  = mysql.createPool(
-    process.argv[2] === 'prod' ? this.dbConfig : this.dbConfigDev
+    process.argv[2] === '80' ? this.dbConfig : this.dbConfigDev
 );
 
 exports.getConnection = function(callback) {
