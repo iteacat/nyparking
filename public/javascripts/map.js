@@ -26,9 +26,14 @@ mapModule.factory('initMap', function($resource) {
     function showSign(data) {
         console.log('haha, get the data');
         data.signs.forEach(function(sign) {
+            var descs = sign.sign_desc.split('|');
+            var descStr = '';
+            descs.forEach(function(desc) {
+                descStr += "<p>" + desc + "</p>";
+            })
             var infoWindow = new google.maps.InfoWindow(
                 {
-                    content: sign.sign_desc
+                    content: descStr
                 }
             );
             var marker = new google.maps.Marker(
