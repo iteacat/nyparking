@@ -4,13 +4,13 @@
 
 var mapModule = angular.module('mapModule', ['ngResource']);
 
-mapModule.factory('chatRsc', function($resource) {
+mapModule.factory('chatRsc', function ($resource) {
     return $resource("/chats.json");
 });
 
-mapModule.factory('initMap', function($resource) {
+mapModule.factory('initMap', function ($resource) {
 
-    var myLatLng = { lat: 40.739648, lng: -73.9993346 };
+    var myLatLng = {lat: 40.739648, lng: -73.9993346};
     var map = null;
     var infoWins = [];
     var markers = [];
@@ -25,10 +25,10 @@ mapModule.factory('initMap', function($resource) {
 
     function showSign(data) {
         console.log('haha, get the data');
-        data.signs.forEach(function(sign) {
+        data.signs.forEach(function (sign) {
             var descs = sign.sign_desc.split('|');
             var descStr = '';
-            descs.forEach(function(desc) {
+            descs.forEach(function (desc) {
                 descStr += "<p>" + desc + "</p>";
             })
             var infoWindow = new google.maps.InfoWindow(
@@ -39,15 +39,15 @@ mapModule.factory('initMap', function($resource) {
             var marker = new google.maps.Marker(
                 {
                     position: {lat: sign.x, lng: sign.y},
-                    map: map,
-                    title: 'You rock'
+                    title: "click for parking information",
+                    map: map
                 }
             );
-            google.maps.event.addListener(marker, 'click', function() {
+            google.maps.event.addListener(marker, 'click', function () {
                 if (infoWindow.getMap())
                     infoWindow.close();
                 else {
-                    infoWins.forEach(function(infoWin) {
+                    infoWins.forEach(function (infoWin) {
                         infoWin.close();
                     });
                     infoWindow.open(map, marker);
@@ -68,7 +68,7 @@ mapModule.factory('initMap', function($resource) {
         var styles = [
             {
                 "stylers": [
-                    { "saturation": 34 }
+                    {"saturation": 34}
                 ]
             }
         ];
@@ -83,13 +83,28 @@ mapModule.factory('initMap', function($resource) {
             navigator.geolocation.getCurrentPosition(function (position) {
                 initialLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
                 map.setCenter(initialLocation);
+
+                var curLocMarker = new google.maps.Marker(
+                    {
+                        position: {lat: position.coords.latitude, lng: position.coords.longitude},
+                        map: map,
+                        title: 'Your current location',
+                        icon: "../images/current_location.png"
+                    }
+                );
             });
         }
 
         map.mapTypes.set('map_style', styledMap);
         map.setMapTypeId('map_style');
 
-        google.maps.event.addListener(map, 'idle', function() {
+        google.maps.event.addListener(map, 'zoom_changed', function () {
+            if (map.zoom < 14) {
+                removeMarkers(markers);
+            }
+        });
+
+        google.maps.event.addListener(map, 'idle', function () {
             if (map.zoom < 18) {
                 console.log('Not shown on event: zoom < 18');
                 return;
@@ -100,26 +115,33 @@ mapModule.factory('initMap', function($resource) {
             }, 0);
         });
 
-        google.maps.event.addListener(map, 'click', function() {
-            infoWins.forEach(function(infoWin) {
+        google.maps.event.addListener(map, 'click', function () {
+            infoWins.forEach(function (infoWin) {
                 infoWin.close();
             });
         });
     }
 
-    return function() {
+    return function () {
         $(document).ready(function () {
             /*
-            var h = $(window).height(),
-                offsetTop = 60; // Calculate the top offset
+             var h = $(window).height(),
+             offsetTop = 60; // Calculate the top offset
 
-            $('#map-canvas').css('height', (h));
-            $('#map-canvas').css('width', '100%');
-            $('#map-canvas').css('padding', '0px');
-            $('#map-canvas').css('margin', '0px');
-            $('#map-canvas').css('float', 'left');
-            */
+             $('#map-canvas').css('height', (h));
+             $('#map-canvas').css('width', '100%');
+             $('#map-canvas').css('padding', '0px');
+             $('#map-canvas').css('margin', '0px');
+             $('#map-canvas').css('float', 'left');
+             */
             initialize();
         });
     }
 });
+
+function removeMarkers(markers) {
+    markers.forEach(function(marker) {
+        marker.setMap(null);
+    });
+    markers.length = 0;
+}

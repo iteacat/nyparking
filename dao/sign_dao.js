@@ -2,8 +2,8 @@
  * Created by yin on 4/5/15.
  */
 
-var mysql = require('mysql');
 var nypCommon = require('./nypCommon.js');
+var logger = require('./logger.js');
 
 var sql = "set @center=point(?, ?);" +
     " SET @radius = ?; " +
