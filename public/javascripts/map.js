@@ -15,9 +15,15 @@ mapModule.factory('initMap', function ($resource) {
     var infoWins = [];
     var markers = [];
     var chatHistory = []
+    var rsc = $resource("/signs.json/:lat/:lng", {}, {
+        get: {
+            cache: true,
+            method: 'GET'
+        }
+    });
 
     function getSigns(location) {
-        var rsc = $resource("/signs.json/:lat/:lng");
+
         rsc.get(location, function (data) {
             showSign(data);
         });
@@ -99,19 +105,26 @@ mapModule.factory('initMap', function ($resource) {
         map.setMapTypeId('map_style');
 
         google.maps.event.addListener(map, 'zoom_changed', function () {
-            if (map.zoom < 14) {
+            if (map.zoom < 13) {
                 removeMarkers(markers);
             }
         });
 
         google.maps.event.addListener(map, 'idle', function () {
+            /*
             if (map.zoom < 18) {
                 console.log('Not shown on event: zoom < 18');
                 return;
             }
+            */
             window.setTimeout(function () {
+                removeMarkers(markers);
                 var loc = map.getCenter();
-                getSigns({lat: loc.lat(), lng: loc.lng()});
+                console.log("orig loc: ", loc);
+                var roundedLat = getRoundedLoc(loc.lat());
+                var roundedLng = getRoundedLoc(loc.lng());
+                console.log("rounded loc: %f %f", roundedLat, roundedLng);
+                getSigns({lat: roundedLat, lng: roundedLng});
             }, 0);
         });
 
@@ -144,4 +157,22 @@ function removeMarkers(markers) {
         marker.setMap(null);
     });
     markers.length = 0;
+}
+
+function getRoundedLoc(orig) {
+    var isNeg = false;
+    if (orig < 0) {
+        isNeg = true;
+        orig = -orig;
+    }
+
+    var rounded = Math.floor(orig*1000) / 1000;
+
+    var lastDigit = rounded * 1000 % 10;
+    if (lastDigit >= 5) {
+        rounded = rounded - (lastDigit / 1000 - 0.005);
+    } else {
+        rounded = rounded - lastDigit / 1000;
+    }
+    return isNeg ? -rounded : rounded;
 }

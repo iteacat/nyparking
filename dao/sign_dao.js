@@ -4,6 +4,7 @@
 
 var nypCommon = require('./nypCommon.js');
 var logger = require('./logger.js');
+var default_radius = 0.003;
 
 var sql = "set @center=point(?, ?);" +
     " SET @radius = ?; " +
@@ -19,10 +20,14 @@ var sql = "set @center=point(?, ?);" +
     "SQRT(POW( ABS( X(location) - X(@center)), 2) + POW( ABS(Y(location) - Y(@center)), 2 )) AS distance " +
     " FROM nyparking_signs " +
     " WHERE Intersects(location, GeomFromText(@bbox) ) " +
-    " AND SQRT(POW( ABS( X(location) - X(@center)), 2) + POW( ABS(Y(location) - Y(@center)), 2 )) < @radius " +
+    //" AND SQRT(POW( ABS( X(location) - X(@center)), 2) + POW( ABS(Y(location) - Y(@center)), 2 )) < @radius " +
     "GROUP BY location";
 
 function getSigns(x, y, radius, callback) {
+    if (radius === null)
+        radius = default_radius;
+    x = x + 0.0025;
+    y = y - 0.0025;
     nypCommon.getConnection(function (err, conn) {
         if (err) {
             logger.error('CAO! Error on db connection. Returning null result for getSigns.');
