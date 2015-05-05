@@ -3,6 +3,7 @@
  */
 
 var mapModule = angular.module('mapModule', ['ngResource']);
+var markerClicked = false;
 
 mapModule.factory('chatRsc', function ($resource) {
     return $resource("/chats.json");
@@ -15,6 +16,7 @@ mapModule.factory('initMap', function ($resource) {
     var infoWins = [];
     var markers = [];
     var chatHistory = []
+    var curLocMarker = [];
     var rsc = $resource("/signs.json/:lat/:lng", {}, {
         get: {
             cache: true,
@@ -46,10 +48,13 @@ mapModule.factory('initMap', function ($resource) {
                 {
                     position: {lat: sign.x, lng: sign.y},
                     title: "click for parking information",
-                    map: map
+                    map: map,
+                    icon: "../images/dot.png"
                 }
             );
+
             google.maps.event.addListener(marker, 'click', function () {
+                markerClicked = true
                 if (infoWindow.getMap())
                     infoWindow.close();
                 else {
@@ -59,6 +64,7 @@ mapModule.factory('initMap', function ($resource) {
                     infoWindow.open(map, marker);
                 }
             });
+
             infoWins.push(infoWindow);
             markers.push(marker);
         });
@@ -85,40 +91,37 @@ mapModule.factory('initMap', function ($resource) {
         map = new google.maps.Map(document.getElementById('map-canvas'),
             mapOptions);
 
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function (position) {
-                initialLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-                map.setCenter(initialLocation);
+        var curLocationControlDiv = document.createElement('div');
+        var curLocationControl = new CurrentLocationControl(curLocationControlDiv, map, curLocMarker);
+        curLocationControlDiv.index = 1;
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(curLocationControlDiv);
 
-                var curLocMarker = new google.maps.Marker(
-                    {
-                        position: {lat: position.coords.latitude, lng: position.coords.longitude},
-                        map: map,
-                        title: 'Your current location',
-                        icon: "../images/current_location.png"
-                    }
-                );
-            });
-        }
+        goToCurrentLocation(map, curLocMarker);
 
         map.mapTypes.set('map_style', styledMap);
         map.setMapTypeId('map_style');
 
-        google.maps.event.addListener(map, 'zoom_changed', function () {
-            if (map.zoom < 13) {
-                removeMarkers(markers);
-            }
+        /* not working on bootstrap
+        google.maps.event.addListener(map, 'dblclick', function() {
+            resizeMap();
         });
+        */
 
         google.maps.event.addListener(map, 'idle', function () {
-            /*
-            if (map.zoom < 18) {
-                console.log('Not shown on event: zoom < 18');
+            if (markerClicked) {
+                markerClicked = false;
+                console.log('recenter after marker click. No action');
                 return;
             }
-            */
+
+            if (map.zoom < 15) {
+                console.log('Not shown on event: zoom < 18');
+                removeMarkers(markers, infoWins);
+                return;
+            }
+
             window.setTimeout(function () {
-                removeMarkers(markers);
+                removeMarkers(markers, infoWins);
                 var loc = map.getCenter();
                 console.log("orig loc: ", loc);
                 var roundedLat = getRoundedLoc(loc.lat());
@@ -152,11 +155,32 @@ mapModule.factory('initMap', function ($resource) {
     }
 });
 
-function removeMarkers(markers) {
+function goToCurrentLocation(map, curLocMarker) {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+            var initialLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+            map.setCenter(initialLocation);
+            if (curLocMarker.length !== 0) {
+                curLocMarker[0].setMap(null);
+            }
+            curLocMarker[0] = new google.maps.Marker(
+                {
+                    position: {lat: position.coords.latitude, lng: position.coords.longitude},
+                    map: map,
+                    title: 'Your current location',
+                    icon: "../images/current_location.png"
+                }
+            );
+        });
+    }
+}
+
+function removeMarkers(markers, infoWins) {
     markers.forEach(function(marker) {
         marker.setMap(null);
     });
     markers.length = 0;
+    infoWins.length = 0;
 }
 
 function getRoundedLoc(orig) {
@@ -175,4 +199,21 @@ function getRoundedLoc(orig) {
         rounded = rounded - lastDigit / 1000;
     }
     return isNeg ? -rounded : rounded;
+}
+
+// not working on bootstrap
+function resizeMap() {
+    console.log('resizing...');
+    $("#map-canvas").toggleClass("fullscreen")
+}
+
+function CurrentLocationControl(controlDiv, map, curLocMarker) {
+    var controlUI = document.createElement('img');
+    controlUI.src = "../images/curLocIcon.png";
+
+    controlDiv.appendChild(controlUI);
+
+    google.maps.event.addDomListener(controlUI, 'click', function() {
+        goToCurrentLocation(map, curLocMarker);
+    });
 }

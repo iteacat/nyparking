@@ -3,10 +3,6 @@ html, body, #map-canvas{
     width: 100%;
 }
 
-#map-canvas {
-    height:		550px;
-}
-
 .chatInput {
 
 }
@@ -22,4 +18,14 @@ ul li {
 
 #chatInput {
     width: 100%;
+}
+
+#map-canvas {
+    height:		550px;
+}
+
+#map-canvas.fullscreen {
+    position: fixed;
+    width:100%;
+    height: 100%;
 }
