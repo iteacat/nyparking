@@ -49,7 +49,7 @@ mapModule.factory('initMap', function ($resource) {
                     position: {lat: sign.x, lng: sign.y},
                     title: "click for parking information",
                     map: map,
-                    icon: "../images/dot.png"
+                    icon: "../images/marker5.png"
                 }
             );
 
