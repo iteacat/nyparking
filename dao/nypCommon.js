@@ -16,7 +16,7 @@ exports.dbConfig = {
 };
 
 exports.dbConfigDev = {
-    host: '192.168.56.101',
+    host: 'localhost',
     user: 'root',
     password: null,
     port: '3306',
