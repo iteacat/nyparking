@@ -2,7 +2,7 @@
  * Created by yin on 4/5/15.
  */
 
-var nypCommon = require('./nypCommon.js');
+var mysqlDao = require('../common/mysqlDao');
 var logger = require('./logger.js');
 var default_radius = 0.003;
 
@@ -24,23 +24,20 @@ var sql = "set @center=point(?, ?);" +
     "GROUP BY location";
 
 function getSigns(x, y, radius, callback) {
-    if (radius === null)
-        radius = default_radius;
-    x = x + 0.0025;
-    y = y - 0.0025;
-    nypCommon.getConnection(function (err, conn) {
+    var location = normalizeLocation(x, y, radius);
+
+    mysqlDao.getConnection(function (err, conn) {
         if (err) {
             logger.error('CAO! Error on db connection. Returning null result for getSigns.');
             return [];
         }
-        conn.query(sql, [x, y, radius], function (err, rows, fields) {
+        conn.query(sql, [location.x, location.y, location.radius], function (err, rows, fields) {
             conn.release();
             if (err && err.errno !== 1062) {
 
                 console.error('error writing to db ', err);
             }
 
-            //console.log("rows ", rows.splice(3)[0]);
             var ret;
             if (rows === undefined || rows.length === 0)
                 ret = [];
@@ -49,6 +46,25 @@ function getSigns(x, y, radius, callback) {
             callback(ret);
         });
     });
+};
+
+var normalizeLocation = function(x, y, radius) {
+    if (radius === null)
+        radius = default_radius;
+    x = x + 0.0025;
+    y = y - 0.0025;
+    return {
+        x: x,
+        y: y,
+        radius: radius
+    };
 }
 
-module.exports = getSigns;
+function getSignsWithTime(x, y, radius, callback) {
+
+}
+
+module.exports = {
+    getSigns: getSigns,
+    getSignsWithTime: getSignsWithTime
+};
