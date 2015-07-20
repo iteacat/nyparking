@@ -16,6 +16,8 @@ var all = {
         poolSize: 100,
         autoReconnect: true
     }
+
+    ,nyparkingCollection: 'nyparking_signs'
 };
 
 var config= _.merge(

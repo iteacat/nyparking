@@ -2,9 +2,17 @@
  * Created by yin on 4/5/15.
  */
 
-var mysqlDao = require('../common/mysqlDao');
 var logger = require('./logger.js');
+var mysqlDao = require('../common/mysqlDao');
+var mongoDao = require('../common/mongoDao');
+var config = require('../config');
+
 var default_radius = 0.003;
+var DISTANCE_MULTIPLIER = 3963.2;
+
+var getRadius = function (miles) {
+    return miles / DISTANCE_MULTIPLIER;
+}
 
 var sql = "set @center=point(?, ?);" +
     " SET @radius = ?; " +
@@ -61,7 +69,34 @@ var normalizeLocation = function(x, y, radius) {
 }
 
 function getSignsWithTime(x, y, radius, callback) {
+    var location = normalizeLocation(x, y, radius);
 
+    mongoDao.getDb(function(err, db) {
+        if (err) {
+            logger.error('Failed to get db: ', location.x, location.y, location.radius, err);
+            return callback(err);
+        }
+
+        console.log('query: ', location);
+
+        db.collection(config.nyparkingCollection).find(
+            {
+                loc: {
+                    $geoWithin: {
+                        $centerSphere: [[location.y, location.x], getRadius(0.03)]
+                    }
+                }
+            }).toArray(function(err, result) {
+                if (err)  {
+                    logger.error('Failed to query: ', x, y, radius, err);
+                    return callback(err);
+                }
+
+                console.log('get location: ', result);
+                // TODO
+                callback(null, result);
+            })
+    })
 }
 
 module.exports = {

@@ -14,8 +14,11 @@ router.get('/signs.json/:lat/:lng', function(req, res, next) {
     });
 });
 
-//router.get('/signs_with_time/:lat/:lng', function(req, res, next) {
-//});
+router.get('/signs_with_time/:lat/:lng', function(req, res, next) {
+    signsDao.getSignsWithTime(Number(req.params.lat), Number(req.params.lng), null, function(err, result) {
+        res.json({'signs': result});
+    });
+});
 
 router.get('/chats.json', function(req, res, next) {
     res.json({'chats' : chatDao.chats});
