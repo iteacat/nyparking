@@ -4,19 +4,21 @@
 
 var mapModule = angular.module('mapModule', ['ngResource']);
 var markerClicked = false;
+var map = null;
 
 mapModule.factory('chatRsc', function ($resource) {
     return $resource("/chats.json");
 });
 
-mapModule.factory('initMap', function ($resource) {
+mapModule.factory('mapDao', function ($resource) {
 
     var myLatLng = {lat: 40.739648, lng: -73.9993346};
-    var map = null;
     var infoWins = [];
     var markers = [];
     var chatHistory = []
     var curLocMarker = [];
+    var mapEpoch = 0;
+    var mapDuration = 0;
     var rsc = $resource("/signs.json/:lat/:lng", {}, {
         get: {
             cache: true,
@@ -24,11 +26,23 @@ mapModule.factory('initMap', function ($resource) {
         }
     });
 
-    function getSigns(location) {
+    var rscSignsWithTime = $resource('/signs_with_time/:lat/:lng/:epoch/:duration', {}, {
+        get: {
+            cache: true,
+            method: 'GET'
+        }
+    })
 
+    function getSigns(location) {
         rsc.get(location, function (data) {
             showSign(data);
         });
+    }
+
+    function getSignsWithTime(location) {
+        rscSignsWithTime.get(location, function(data) {
+            console.log(data);
+        })
     }
 
     function showSign(data) {
@@ -68,10 +82,31 @@ mapModule.factory('initMap', function ($resource) {
             infoWins.push(infoWindow);
             markers.push(marker);
         });
-
     }
 
-    function initialize() {
+    var refreshMap = function (epoch, duration) {
+        mapEpoch = epoch;
+        mapDuration = duration;
+
+        if (map.zoom < 15) {
+            console.log('Not shown on event: zoom < 18');
+            removeMarkers(markers, infoWins);
+            return;
+        }
+
+        window.setTimeout(function () {
+            removeMarkers(markers, infoWins);
+            var loc = map.getCenter();
+            console.log("orig loc: ", loc);
+            var roundedLat = getRoundedLoc(loc.lat());
+            var roundedLng = getRoundedLoc(loc.lng());
+            console.log("rounded loc: %f %f", roundedLat, roundedLng);
+            getSigns({lat: roundedLat, lng: roundedLng});
+            getSignsWithTime({lat: roundedLat, lng: roundedLng, epoch: mapEpoch, duration: mapDuration});
+        }, 0);
+    };
+
+    var initialize = function(epoch, duration) {
         var mapOptions = {
             center: myLatLng,
             zoom: 18
@@ -114,21 +149,7 @@ mapModule.factory('initMap', function ($resource) {
                 return;
             }
 
-            if (map.zoom < 15) {
-                console.log('Not shown on event: zoom < 18');
-                removeMarkers(markers, infoWins);
-                return;
-            }
-
-            window.setTimeout(function () {
-                removeMarkers(markers, infoWins);
-                var loc = map.getCenter();
-                console.log("orig loc: ", loc);
-                var roundedLat = getRoundedLoc(loc.lat());
-                var roundedLng = getRoundedLoc(loc.lng());
-                console.log("rounded loc: %f %f", roundedLat, roundedLng);
-                getSigns({lat: roundedLat, lng: roundedLng});
-            }, 0);
+            refreshMap(epoch, duration);
         });
 
         google.maps.event.addListener(map, 'click', function () {
@@ -138,22 +159,27 @@ mapModule.factory('initMap', function ($resource) {
         });
     }
 
-    return function () {
-        $(document).ready(function () {
-            /*
-             var h = $(window).height(),
-             offsetTop = 60; // Calculate the top offset
+    return {
+        init: function(epoch, duration) {
+            $(document).ready(function () {
+                /*
+                 var h = $(window).height(),
+                 offsetTop = 60; // Calculate the top offset
 
-             $('#map-canvas').css('height', (h));
-             $('#map-canvas').css('width', '100%');
-             $('#map-canvas').css('padding', '0px');
-             $('#map-canvas').css('margin', '0px');
-             $('#map-canvas').css('float', 'left');
-             */
-            initialize();
-        });
+                 $('#map-canvas').css('height', (h));
+                 $('#map-canvas').css('width', '100%');
+                 $('#map-canvas').css('padding', '0px');
+                 $('#map-canvas').css('margin', '0px');
+                 $('#map-canvas').css('float', 'left');
+                 */
+                initialize(epoch, duration);
+            });
+        },
+        refresh: refreshMap
     }
 });
+
+
 
 function goToCurrentLocation(map, curLocMarker) {
     if (navigator.geolocation) {

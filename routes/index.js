@@ -14,8 +14,9 @@ router.get('/signs.json/:lat/:lng', function(req, res, next) {
     });
 });
 
-router.get('/signs_with_time/:lat/:lng', function(req, res, next) {
-    signsDao.getSignsWithTime(Number(req.params.lat), Number(req.params.lng), null, function(err, result) {
+router.get('/signs_with_time/:lat/:lng/:epoch/:duration', function(req, res, next) {
+    signsDao.getSignsWithTime(
+        Number(req.params.lat), Number(req.params.lng), null, Number(req.params.epoch), Number(req.params.duration), function(err, result) {
         res.json({'signs': result});
     });
 });

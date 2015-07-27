@@ -3,8 +3,34 @@
  */
 var app = angular.module('myApp', ['mapModule']);
 
-app.controller("MainCtrl", function(initMap) {
-    initMap();
+var init = function($scope) {
+    $scope.inputDate = moment().toDate();
+    $scope.inputTime = new Date(moment().format('L LT'));
+}
+
+var getEpoch = function($scope) {
+    var dateMoment = moment($scope.inputDate);
+    var timeMoment = moment($scope.inputTime);
+    dateMoment.hour(timeMoment.hour());
+    dateMoment.minute(timeMoment.minute());
+
+    console.log('debug - epoch: ', dateMoment);
+
+    return dateMoment.valueOf();
+};
+
+var getDuration = function ($scope) {
+    return $scope.inputDuration * 60;
+}
+
+app.controller("MainCtrl", function(mapDao, $scope, $filter) {
+    init($scope);
+    $scope.inputDuration = 2;
+    mapDao.init(getEpoch($scope), getDuration($scope));
+
+    $scope.refreshAvailability = function() {
+        mapDao.refresh(getEpoch($scope), getDuration($scope));
+    }
 });
 
 app.controller("ChatCtrl", ['$scope', 'chatRsc', function($scope, chatRsc) {
