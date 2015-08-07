@@ -5,6 +5,7 @@
 var mapModule = angular.module('mapModule', ['ngResource']);
 var markerClicked = false;
 var map = null;
+var isDebug = true;
 
 mapModule.factory('chatRsc', function ($resource) {
     return $resource("/chats.json");
@@ -35,14 +36,69 @@ mapModule.factory('mapDao', function ($resource) {
 
     function getSigns(location) {
         rsc.get(location, function (data) {
-            showSign(data);
+            //showSign(data);
         });
     }
 
     function getSignsWithTime(location) {
         rscSignsWithTime.get(location, function(data) {
-            console.log(data);
+            showSignsWithTime(data);
         })
+    }
+
+    // the function that renders the markers
+    function showSignsWithTime(data) {
+        //console.log('yin - debug: ', data.signs);
+
+        data.signs.forEach(function(loc) {
+            var descStr = '';
+            var pos = null;
+            loc.forEach(function(sign) {
+                //console.log('each sign: ', sign);
+                descStr += "<p>" + sign.desc + "</p>";
+                if (!pos) {
+                    pos = {
+                        x: sign.loc.coordinates[1],
+                        y: sign.loc.coordinates[0]
+                    };
+                }
+                if (isDebug) {
+                    descStr += "<p>";
+                    descStr += "Sign type: " + sign.signType || "NULL";
+                    descStr += "<p>";
+                    descStr += "availability: " + (sign.availability ? sign.availability.color : "NULL");
+                }
+            });
+
+            var infoWindow = new google.maps.InfoWindow(
+                {
+                    content: descStr
+                }
+            );
+            var marker = new google.maps.Marker(
+                {
+                    position: {lat: pos.x, lng: pos.y},
+                    title: "click for parking information",
+                    map: map,
+                    icon: "../images/marker5.png"
+                }
+            );
+
+            google.maps.event.addListener(marker, 'click', function () {
+                markerClicked = true
+                if (infoWindow.getMap())
+                    infoWindow.close();
+                else {
+                    infoWins.forEach(function (infoWin) {
+                        infoWin.close();
+                    });
+                    infoWindow.open(map, marker);
+                }
+            });
+
+            infoWins.push(infoWindow);
+            markers.push(marker);
+        });
     }
 
     function showSign(data) {
@@ -88,6 +144,8 @@ mapModule.factory('mapDao', function ($resource) {
         mapEpoch = epoch;
         mapDuration = duration;
 
+        console.log('epoch and duration: ', epoch, duration);
+
         if (map.zoom < 15) {
             console.log('Not shown on event: zoom < 18');
             removeMarkers(markers, infoWins);
@@ -101,7 +159,7 @@ mapModule.factory('mapDao', function ($resource) {
             var roundedLat = getRoundedLoc(loc.lat());
             var roundedLng = getRoundedLoc(loc.lng());
             console.log("rounded loc: %f %f", roundedLat, roundedLng);
-            getSigns({lat: roundedLat, lng: roundedLng});
+            //getSigns({lat: roundedLat, lng: roundedLng});
             getSignsWithTime({lat: roundedLat, lng: roundedLng, epoch: mapEpoch, duration: mapDuration});
         }, 0);
     };

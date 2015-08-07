@@ -8,8 +8,9 @@ var mongoDao = require('../common/mongoDao');
 var config = require('../config');
 var assert = require('assert');
 var moment = require('moment');
+var _ = require('lodash');
 
-var default_radius = 0.003;
+var default_radius = 0.2;
 var DISTANCE_MULTIPLIER = 3963.2;
 
 var getRadius = function (miles) {
@@ -95,12 +96,12 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
             {
                 loc: {
                     $geoWithin: {
-                        $centerSphere: [[location.y, location.x], getRadius(0.03)]
+                        $centerSphere: [[location.y, location.x], getRadius(location.radius)]
                     }
                 }
             }).toArray(function(err, items) {
                 if (err)  {
-                    logger.error('Failed to query: ', x, y, radius, err);
+                    logger.error('Failed to query: ', x, y, location.radius, err);
                     return callback(err);
                 }
 
@@ -115,8 +116,18 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
                 })
 
                 console.log('get location: ', items);
-                // TODO
-                callback(null, items);
+
+                var dataByLoc = _.chain(items)
+                    .groupBy(function(each) {
+                        return each.loc.coordinates;
+                    })
+                    .pairs()
+                    .map(function(each) {
+                        return each[1];
+                    })
+                    .value();
+
+                callback(null, dataByLoc);
             })
     })
 }
