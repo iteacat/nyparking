@@ -17,6 +17,14 @@ var getRadius = function (miles) {
     return miles / DISTANCE_MULTIPLIER;
 }
 
+var SIGN_TIME_COVERAGE = {
+    MISS: "M",
+    COVER_FULL: "F",
+    COVER_HEAD: "H",
+    COVER_TAIL: 'T',
+    COVER_PARTIAL: 'P'
+};
+
 var sql = "set @center=point(?, ?);" +
     " SET @radius = ?; " +
     " SET @bbox = CONCAT('POLYGON((', " +
@@ -115,8 +123,6 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
                         delete item.signTimeRanges;
                 })
 
-                console.log('get location: ', items);
-
                 var dataByLoc = _.chain(items)
                     .groupBy(function(each) {
                         return each.loc.coordinates;
@@ -127,25 +133,27 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
                     })
                     .value();
 
+                updateMarkerType(dataByLoc);
+
                 callback(null, dataByLoc);
             })
     })
 }
 
 /**
- * 1. No intersect -> red
- * 2. fully covered by a single interval -> green
- * 3. fully covered by more than one intervals (in the case the intervals that cover it are continuous -> green
+ * 1. No intersect -> MISS
+ * 2. fully covered by a single interval -> COVER_FULL
+ * 3. fully covered by more than one intervals (in the case the intervals that cover it are continuous -> COVER_FULL
  * 4. partial covered by a single interval
- * 4.1 first part is covered -> green_first
- * 4.2. middle part is covered -> green_middle
- * 4.3 last part is covered -> green_last
- * 5. partial covered by more than one intervals -> green_multi
+ * 4.1 first part is covered -> COVER_HEAD
+ * 4.2. middle part is covered -> COVER_PARTIAL
+ * 4.3 last part is covered -> COVER_TAIL
+ * 5. partial covered by more than one intervals -> COVER_PARTIAL
  *
  * @param intervals
  * @param interval
  *
- * @return color - indicated by above; overlaps -> array of numbers of minutes overlapped
+ * @return coverage - indicated by above; overlaps -> array of numbers of minutes overlapped
  */
 var findInterval = function (intervals, interval) {
     if (!intervals) {
@@ -171,7 +179,7 @@ var findInterval = function (intervals, interval) {
 
     if (first === -1) {
         return {
-            color: 'red',
+            coverage: SIGN_TIME_COVERAGE.MISS,
             overlaps: []
         }
     }
@@ -183,7 +191,7 @@ var findInterval = function (intervals, interval) {
     // 1
     if (first === second && firstPos === 'out' && secondPos === 'out') {
         return {
-            color: 'red',
+            coverage: SIGN_TIME_COVERAGE.MISS,
             overlaps: []
         }
     }
@@ -191,7 +199,7 @@ var findInterval = function (intervals, interval) {
     //2
     if (first === second && firstPos === 'in' && secondPos === 'in') {
         return {
-            color: 'green',
+            coverage: SIGN_TIME_COVERAGE.COVER_FULL,
             overlaps: [interval.second - interval.first]
         };
     }
@@ -207,7 +215,7 @@ var findInterval = function (intervals, interval) {
         }
         if (continuous) {
             return {
-                color: 'green',
+                coverage: SIGN_TIME_COVERAGE.COVER_FULL,
                 overlaps: [interval.second - interval.first]
             }
         }
@@ -216,7 +224,7 @@ var findInterval = function (intervals, interval) {
     //4.1
     if (first === second - 1 && firstPos === 'in' && secondPos === 'out') {
         return {
-            color: 'green_first',
+            coverage: SIGN_TIME_COVERAGE.COVER_HEAD,
             overlaps: [intervals[first][1] - interval.first]
         }
     }
@@ -224,7 +232,7 @@ var findInterval = function (intervals, interval) {
     //4.2
     if (first === second - 1 && firstPos === 'out' && secondPos === 'out') {
         return {
-            color: 'green_middle',
+            coverage: SIGN_TIME_COVERAGE.COVER_PARTIAL,
             overlaps: [intervals[first][1] - intervals[first][0]]
         }
     }
@@ -232,26 +240,51 @@ var findInterval = function (intervals, interval) {
     //4.3
     if (first === second && firstPos === 'out' && secondPos === 'in') {
         return {
-            color: 'green_last',
+            coverage: SIGN_TIME_COVERAGE.COVER_TAIL,
             overlaps: [interval.second - intervals[second][0]]
         }
     }
 
     return {
-        color: 'red',
+        coverage: SIGN_TIME_COVERAGE.MISS,
         overlaps: []
     }
 };
 
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 1, second: 2}), {color: 'red', overlaps: []});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 1, second: 7}), {color: 'green_last', overlaps: [2]});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 5, second: 7}), {color: 'green', overlaps: [2]});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 6, second: 7}), {color: 'green', overlaps: [1]});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 8, second: 12}), {color: 'red', overlaps: []});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 5, second: 11}), {color: 'green_first', overlaps: [3]});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 10, second: 19}), {color: 'green_middle', overlaps: [5]});
-assert.deepEqual(findInterval([[5, 8], [ 12, 16], [ 17, 30]], {first: 13, second: 23}), {color: 'red', overlaps: []});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 17, 30]], {first: 13, second: 23}), {color: 'green', overlaps: [10]});
+/*
+dataByLoc sample:
+ [ { _id: 55a867ead667fd4a51d20daf,
+ loc: { type: 'Point', coordinates: [Object] },
+ boro: 'Q',
+ orderNumber: 'S-271387',
+ sequenceNumber: '3',
+ arrow: '',
+ desc: 'NO PARKING (SANITATION SYMBOL)11AM-2PM FRIDAY',
+ side: 'E',
+ signType: 'NO PARKING',
+ signHour: null,
+ availability: { coverage: 'red', overlaps: [] } } ]
+ */
+var updateMarkerType = function(dataByLoc) {
+    if (!dataByLoc)
+        return;
+    dataByLoc.forEach(function(eachLoc) {
+        //console.log('===========');
+        eachLoc.forEach(function(eachSign) {
+            //console.log(JSON.stringify(eachSign));
+        });
+    })
+}
+
+assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 1, second: 2}), {coverage: SIGN_TIME_COVERAGE.MISS, overlaps: []});
+assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 1, second: 7}), {coverage: SIGN_TIME_COVERAGE.COVER_TAIL, overlaps: [2]});
+assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 5, second: 7}), {coverage: SIGN_TIME_COVERAGE.COVER_FULL, overlaps: [2]});
+assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 6, second: 7}), {coverage: SIGN_TIME_COVERAGE.COVER_FULL, overlaps: [1]});
+assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 8, second: 12}), {coverage: SIGN_TIME_COVERAGE.MISS, overlaps: []});
+assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 5, second: 11}), {coverage: SIGN_TIME_COVERAGE.COVER_HEAD, overlaps: [3]});
+assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 10, second: 19}), {coverage: SIGN_TIME_COVERAGE.COVER_PARTIAL, overlaps: [5]});
+assert.deepEqual(findInterval([[5, 8], [ 12, 16], [ 17, 30]], {first: 13, second: 23}), {coverage: SIGN_TIME_COVERAGE.MISS, overlaps: []});
+assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 17, 30]], {first: 13, second: 23}), {coverage: SIGN_TIME_COVERAGE.COVER_FULL, overlaps: [10]});
 
 assert.deepEqual(toInterval(moment('201507210100', 'YYYYMMDDHHmm').valueOf(), 30), {first: 1500, second: 1530});
 assert.deepEqual(toInterval(moment('201507211430', 'YYYYMMDDhhmm').valueOf(), 70), {first: 870 + 1440, second: 940 + 1440});

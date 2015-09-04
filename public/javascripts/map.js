@@ -55,7 +55,35 @@ mapModule.factory('mapDao', function ($resource) {
             var pos = null;
             loc.forEach(function(sign) {
                 //console.log('each sign: ', sign);
-                descStr += "<p>" + sign.desc + "</p>";
+                var direction = "Direction: ";
+                switch (sign.arrow) {
+                    case 'N':
+                        direction += 'North';
+                        break;
+                    case 'S':
+                        direction += 'South';
+                        break;
+                    case 'E':
+                        direction += 'East';
+                        break;
+                    case 'W':
+                        direction += 'West';
+                        break;
+                    case 'N/S':
+                    case 'E/W':
+                        direction += 'Both';
+                        break;
+                    case 'L':
+                        direction += 'Left';
+                        break;
+                    case 'R':
+                        direction += 'Right';
+                        break;
+                    default:
+                        direction += 'Both';
+                }
+
+                descStr += "<p>" + sign.desc + "</p>" + direction;
                 if (!pos) {
                     pos = {
                         x: sign.loc.coordinates[1],
@@ -66,7 +94,9 @@ mapModule.factory('mapDao', function ($resource) {
                     descStr += "<p>";
                     descStr += "Sign type: " + sign.signType || "NULL";
                     descStr += "<p>";
-                    descStr += "availability: " + (sign.availability ? sign.availability.color : "NULL");
+                    descStr += "availability: " + (sign.availability ? sign.availability.coverage : "NULL");
+                    descStr += "<p>";
+                    descStr += "overlaps: " + (sign.availability ? sign.availability.overlaps : "NULL");
                 }
             });
 
@@ -80,7 +110,7 @@ mapModule.factory('mapDao', function ($resource) {
                     position: {lat: pos.x, lng: pos.y},
                     title: "click for parking information",
                     map: map,
-                    icon: "../images/marker5.png"
+                    icon: "../images/marker-green.png"
                 }
             );
 
@@ -119,7 +149,7 @@ mapModule.factory('mapDao', function ($resource) {
                     position: {lat: sign.x, lng: sign.y},
                     title: "click for parking information",
                     map: map,
-                    icon: "../images/marker5.png"
+                    icon: "../images/marker-green.png"
                 }
             );
 
