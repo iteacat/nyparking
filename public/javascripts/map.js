@@ -18,21 +18,18 @@ mapModule.factory('chatRsc', function ($resource) {
     return $resource("/chats.json");
 });
 
+mapModule.factory('map', function() {
+    return map;
+});
+
 mapModule.factory('mapDao', function ($resource) {
 
     var myLatLng = {lat: 40.739648, lng: -73.9993346};
     var infoWins = [];
     var markers = [];
-    var chatHistory = []
     var curLocMarker = [];
     var mapEpoch = 0;
     var mapDuration = 0;
-    var rsc = $resource("/signs.json/:lat/:lng", {}, {
-        get: {
-            cache: true,
-            method: 'GET'
-        }
-    });
 
     var rscSignsWithTime = $resource('/signs_with_time/:lat/:lng/:epoch/:duration', {}, {
         get: {
@@ -40,12 +37,6 @@ mapModule.factory('mapDao', function ($resource) {
             method: 'GET'
         }
     })
-
-    function getSigns(location) {
-        rsc.get(location, function (data) {
-            //showSign(data);
-        });
-    }
 
     function getSignsWithTime(location) {
         rscSignsWithTime.get(location, function(data) {
@@ -127,45 +118,6 @@ mapModule.factory('mapDao', function ($resource) {
         });
     }
 
-    function showSign(data) {
-        //console.log('haha, get the data');
-        data.signs.forEach(function (sign) {
-            var descs = sign.sign_desc.split('|');
-            var descStr = '';
-            descs.forEach(function (desc) {
-                descStr += "<p>" + desc + "</p>";
-            })
-            var infoWindow = new google.maps.InfoWindow(
-                {
-                    content: descStr
-                }
-            );
-            var marker = new google.maps.Marker(
-                {
-                    position: {lat: sign.x, lng: sign.y},
-                    title: "click for parking information",
-                    map: map,
-                    icon: "../images/marker-green.png"
-                }
-            );
-
-            google.maps.event.addListener(marker, 'click', function () {
-                markerClicked = true
-                if (infoWindow.getMap())
-                    infoWindow.close();
-                else {
-                    infoWins.forEach(function (infoWin) {
-                        infoWin.close();
-                    });
-                    infoWindow.open(map, marker);
-                }
-            });
-
-            infoWins.push(infoWindow);
-            markers.push(marker);
-        });
-    }
-
     var refreshMap = function (epoch, duration) {
         mapEpoch = epoch;
         mapDuration = duration;
@@ -185,12 +137,14 @@ mapModule.factory('mapDao', function ($resource) {
             var roundedLat = getRoundedLoc(loc.lat());
             var roundedLng = getRoundedLoc(loc.lng());
             //console.log("rounded loc: %f %f", roundedLat, roundedLng);
-            //getSigns({lat: roundedLat, lng: roundedLng});
             getSignsWithTime({lat: roundedLat, lng: roundedLng, epoch: mapEpoch, duration: mapDuration});
         }, 0);
     };
 
     var initialize = function(epoch, duration) {
+        mapEpoch = epoch;
+        mapDuration = duration;
+
         var mapOptions = {
             center: myLatLng,
             zoom: 18
@@ -220,12 +174,6 @@ mapModule.factory('mapDao', function ($resource) {
         map.mapTypes.set('map_style', styledMap);
         map.setMapTypeId('map_style');
 
-        /* not working on bootstrap
-        google.maps.event.addListener(map, 'dblclick', function() {
-            resizeMap();
-        });
-        */
-
         google.maps.event.addListener(map, 'idle', function () {
             if (markerClicked) {
                 markerClicked = false;
@@ -233,7 +181,7 @@ mapModule.factory('mapDao', function ($resource) {
                 return;
             }
 
-            refreshMap(epoch, duration);
+            refreshMap(mapEpoch, mapDuration);
         });
 
         google.maps.event.addListener(map, 'click', function () {
