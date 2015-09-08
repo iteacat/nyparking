@@ -7,6 +7,13 @@ var markerClicked = false;
 var map = null;
 var isDebug = true;
 
+var SIGN_COLOR = {
+    RED: "R",
+    GREEN: "G",
+    BLUE: "B",
+    NONE: "N"
+};
+
 mapModule.factory('chatRsc', function ($resource) {
     return $resource("/chats.json");
 });
@@ -53,37 +60,26 @@ mapModule.factory('mapDao', function ($resource) {
         data.signs.forEach(function(loc) {
             var descStr = '';
             var pos = null;
-            loc.forEach(function(sign) {
-                //console.log('each sign: ', sign);
-                var direction = "Direction: ";
-                switch (sign.arrow) {
-                    case 'N':
-                        direction += 'North';
-                        break;
-                    case 'S':
-                        direction += 'South';
-                        break;
-                    case 'E':
-                        direction += 'East';
-                        break;
-                    case 'W':
-                        direction += 'West';
-                        break;
-                    case 'N/S':
-                    case 'E/W':
-                        direction += 'Both';
-                        break;
-                    case 'L':
-                        direction += 'Left';
-                        break;
-                    case 'R':
-                        direction += 'Right';
-                        break;
-                    default:
-                        direction += 'Both';
-                }
 
-                descStr += "<p>" + sign.desc + "</p>" + direction;
+            var locColor = 'grey';
+            switch(loc.locColor) {
+                case SIGN_COLOR.NONE:
+                    locColor = 'grey';
+                    break;
+                case SIGN_COLOR.GREEN:
+                    locColor = 'green';
+                    break;
+                case SIGN_COLOR.RED:
+                    locColor = 'red';
+                    break;
+                case SIGN_COLOR.BLUE:
+                    locColor = 'blue';
+                    break;
+            }
+
+            loc.signs.forEach(function(sign) {
+                //console.log('each sign: ', sign);
+                descStr += "<p>" + sign.desc + "</p>" + sign.direction;
                 if (!pos) {
                     pos = {
                         x: sign.loc.coordinates[1],
@@ -110,7 +106,7 @@ mapModule.factory('mapDao', function ($resource) {
                     position: {lat: pos.x, lng: pos.y},
                     title: "click for parking information",
                     map: map,
-                    icon: "../images/marker-green.png"
+                    icon: "../images/marker-" + locColor + ".png"
                 }
             );
 
@@ -132,7 +128,7 @@ mapModule.factory('mapDao', function ($resource) {
     }
 
     function showSign(data) {
-        console.log('haha, get the data');
+        //console.log('haha, get the data');
         data.signs.forEach(function (sign) {
             var descs = sign.sign_desc.split('|');
             var descStr = '';
@@ -174,7 +170,7 @@ mapModule.factory('mapDao', function ($resource) {
         mapEpoch = epoch;
         mapDuration = duration;
 
-        console.log('epoch and duration: ', epoch, duration);
+        //console.log('epoch and duration: ', epoch, duration);
 
         if (map.zoom < 15) {
             console.log('Not shown on event: zoom < 18');
@@ -185,10 +181,10 @@ mapModule.factory('mapDao', function ($resource) {
         window.setTimeout(function () {
             removeMarkers(markers, infoWins);
             var loc = map.getCenter();
-            console.log("orig loc: ", loc);
+            //console.log("orig loc: ", loc);
             var roundedLat = getRoundedLoc(loc.lat());
             var roundedLng = getRoundedLoc(loc.lng());
-            console.log("rounded loc: %f %f", roundedLat, roundedLng);
+            //console.log("rounded loc: %f %f", roundedLat, roundedLng);
             //getSigns({lat: roundedLat, lng: roundedLng});
             getSignsWithTime({lat: roundedLat, lng: roundedLng, epoch: mapEpoch, duration: mapDuration});
         }, 0);

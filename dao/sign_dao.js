@@ -19,11 +19,82 @@ var getRadius = function (miles) {
 
 var SIGN_TIME_COVERAGE = {
     MISS: "M",
+
     COVER_FULL: "F",
+
     COVER_HEAD: "H",
     COVER_TAIL: 'T',
     COVER_PARTIAL: 'P'
 };
+
+var SIGN_TYPE = {
+    NO_STANDING: "NO STANDING",
+    NO_PARKING: "NO PARKING",
+    NO_STOPPING: "NO STOPPING",
+
+    HOUR_PARKING: "HOUR PARKING",
+    HMP: "HMP"
+};
+
+var SIGN_COLOR = {
+    RED: "R",
+    GREEN: "G",
+    BLUE: "B",
+    NONE: "N"
+};
+
+/**
+ *
+ * @param signTimeCoverage
+ * @param signType
+ * @returns {string} RED if parking not allown. Green if parking allown. Blue if part of all of the portion are metered
+ * parking (should check before showing blue - if there are green at the same time, then show blue; if there are red at
+ * the same time, then should red. If there ain't other color at the same time, and if the signTimeCoverage is COVER_FULL,
+ * then show blue. Otherwise, show NONE.
+ */
+var getSignColor = function(signTimeCoverage, signType) {
+    if (!signTimeCoverage || !signType) {
+        return SIGN_COLOR.NONE;
+    }
+
+    var color = SIGN_COLOR.NONE;
+
+    switch(signType) {
+        case SIGN_TYPE.NO_PARKING:
+        case SIGN_TYPE.NO_STANDING:
+        case SIGN_TYPE.NO_STOPPING:
+            switch(signTimeCoverage) {
+                case SIGN_TIME_COVERAGE.COVER_FULL:
+                case SIGN_TIME_COVERAGE.COVER_HEAD:
+                case SIGN_TIME_COVERAGE.COVER_TAIL:
+                case SIGN_TIME_COVERAGE.COVER_PARTIAL:
+                    color = SIGN_COLOR.RED;
+                    break;
+                case SIGN_TIME_COVERAGE.MISS:
+                    color = SIGN_COLOR.GREEN;
+                    break;
+                default:
+                    color = SIGN_COLOR.NONE;
+            }
+            break;
+        case SIGN_TYPE.HOUR_PARKING:
+        case SIGN_TYPE.HMP:
+            switch(signTimeCoverage) {
+                case SIGN_TIME_COVERAGE.COVER_FULL:
+                case SIGN_TIME_COVERAGE.COVER_HEAD:
+                case SIGN_TIME_COVERAGE.COVER_TAIL:
+                case SIGN_TIME_COVERAGE.COVER_PARTIAL:
+                    color = SIGN_COLOR.BLUE;
+                    break;
+                case SIGN_TIME_COVERAGE.MISS:
+                    color = SIGN_COLOR.NONE;
+                    break;
+            }
+            break;
+    }
+
+    return color;
+}
 
 var sql = "set @center=point(?, ?);" +
     " SET @radius = ?; " +
@@ -133,9 +204,9 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
                     })
                     .value();
 
-                updateMarkerType(dataByLoc);
+                var dataByLocRet = updateMarkerType(dataByLoc);
 
-                callback(null, dataByLoc);
+                callback(null, dataByLocRet);
             })
     })
 }
@@ -268,12 +339,74 @@ dataByLoc sample:
 var updateMarkerType = function(dataByLoc) {
     if (!dataByLoc)
         return;
+
+    var dataByLocResult = [];
+
     dataByLoc.forEach(function(eachLoc) {
         //console.log('===========');
+        locColor = SIGN_COLOR.NONE;
+        var hasGreen = false;
+        var hasRed = false;
+        var hasBlue = false;
+        var isFullBlue = false;
+
         eachLoc.forEach(function(eachSign) {
             //console.log(JSON.stringify(eachSign));
+            var direction = "Direction: ";
+            switch (eachSign.arrow) {
+                case 'N':
+                    direction += 'North';
+                    break;
+                case 'S':
+                    direction += 'South';
+                    break;
+                case 'E':
+                    direction += 'East';
+                    break;
+                case 'W':
+                    direction += 'West';
+                    break;
+                case 'N/S':
+                case 'E/W':
+                    direction += 'Both';
+                    break;
+                case 'L':
+                    direction += 'Left';
+                    break;
+                case 'R':
+                    direction += 'Right';
+                    break;
+                default:
+                    direction += 'Both';
+            }
+            eachSign.direction = direction;
+            eachSign.color = getSignColor(eachSign.availability === null ? null : eachSign.availability.coverage, eachSign.signType);
+            if (eachSign.color === SIGN_COLOR.GREEN) {
+                hasGreen = true;
+            } else if (eachSign.color === SIGN_COLOR.RED) {
+                hasRed = true;
+            } else if (eachSign.color === SIGN_COLOR.BLUE) {
+                hasBlue = true;
+                if (eachSign.availability.coverage === SIGN_TIME_COVERAGE.COVER_FULL) {
+                    isFullBlue = true;
+                }
+            }
         });
-    })
+
+        if (hasGreen) {
+            locColor = SIGN_COLOR.GREEN;
+        } else if (hasRed) {
+            locColor = SIGN_COLOR.RED;
+        }
+
+        if (hasBlue && hasGreen || (hasBlue && isFullBlue)) {
+            locColor = SIGN_COLOR.BLUE;
+        }
+
+        dataByLocResult.push({locColor: locColor, signs: eachLoc});
+    });
+
+    return dataByLocResult;
 }
 
 assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 1, second: 2}), {coverage: SIGN_TIME_COVERAGE.MISS, overlaps: []});

@@ -53,22 +53,3 @@ var MARKER_DIRECTION = {
     FULL: "F"
 };
 
-var UNKOWN_RET = 1;
-
-var getMarkerDirection = function(sideType) {
-    if (sideType === SIDE_TYPE.W || sideType === SIDE_TYPE.E) {
-        return MARKER_DIRECTION.VERTICAL;
-    } else if (sideType === SIDE_TYPE.N || sideType === SIDE_TYPE.S) {
-        return MARKER_DIRECTION.HORIZONTAL;
-    } else {
-        return MARKER_DIRECTION.FULL;
-    }
-}
-
-var getMarkerTypeLeft = function() {
-    
-}
-
-var getMarkerTypeRight = function() {
-
-}
