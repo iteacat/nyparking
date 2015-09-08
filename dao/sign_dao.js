@@ -175,7 +175,11 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
             {
                 loc: {
                     $geoWithin: {
-                        $centerSphere: [[location.y, location.x], getRadius(location.radius)]
+                        //$centerSphere: [[location.y, location.x], getRadius(location.radius)]
+                        $box: [
+                            [location.y - 0.003, location.x - 0.003],
+                            [location.y + 0.003, location.x + 0.003]
+                        ]
                     }
                 }
             }).toArray(function(err, items) {
