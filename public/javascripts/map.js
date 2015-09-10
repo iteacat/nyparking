@@ -5,7 +5,7 @@
 var mapModule = angular.module('mapModule', ['ngResource']);
 var markerClicked = false;
 var map = null;
-var isDebug = true;
+var isDebug = false;
 
 var SIGN_COLOR = {
     RED: "R",

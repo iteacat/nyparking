@@ -54,7 +54,6 @@ var SIGN_COLOR = {
  */
 var getSignColor = function(signTimeCoverage, signType) {
     if (!signTimeCoverage || !signType) {
-        return SIGN_COLOR.NONE;
     }
 
     var color = SIGN_COLOR.NONE;
