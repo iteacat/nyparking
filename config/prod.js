@@ -15,4 +15,8 @@ module.exports = {
         connectionLimit : 50,
         multipleStatements : true
     }
+
+    ,appConfig: {
+        port: 80
+    }
 };
