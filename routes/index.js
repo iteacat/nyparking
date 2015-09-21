@@ -3,6 +3,7 @@ var router = express.Router();
 var signsDao = require('../dao/sign_dao.js');
 var chatDao = require('../dao/chat_dao.js');
 var logger = require('../dao/logger.js');
+var config = require('../config');
 
 /* GET home page. */
 router.get('/signs.json/:lat/:lng', function(req, res, next) {
@@ -17,7 +18,7 @@ router.get('/signs.json/:lat/:lng', function(req, res, next) {
 router.get('/signs_with_time/:lat/:lng/:epoch/:duration', function(req, res, next) {
     signsDao.getSignsWithTime(
         Number(req.params.lat), Number(req.params.lng), null, Number(req.params.epoch), Number(req.params.duration), function(err, result) {
-        res.json({'signs': result});
+        res.json({'signs': result, 'isDebug': config.isDebug});
     });
 });
 

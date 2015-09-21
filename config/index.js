@@ -18,6 +18,8 @@ var all = {
     }
 
     ,nyparkingCollection: 'nyparking_signs'
+
+    ,isDebug: false
 };
 
 var config= _.merge(

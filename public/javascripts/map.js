@@ -47,6 +47,7 @@ mapModule.factory('mapDao', function ($resource) {
     // the function that renders the markers
     function showSignsWithTime(data) {
         //console.log('yin - debug: ', data.signs);
+        isDebug = data.isDebug ? data.isDebug : false;
 
         data.signs.forEach(function(loc) {
             var descStr = '';
@@ -70,7 +71,8 @@ mapModule.factory('mapDao', function ($resource) {
 
             loc.signs.forEach(function(sign) {
                 //console.log('each sign: ', sign);
-                descStr += "<p>" + sign.desc + "</p>" + sign.direction;
+                var desc = (sign.subDesc ? sign.subDesc : sign.desc);
+                descStr += "<p>" + desc + "</p>" + sign.direction;
                 if (!pos) {
                     pos = {
                         x: sign.loc.coordinates[1],
@@ -79,11 +81,17 @@ mapModule.factory('mapDao', function ($resource) {
                 }
                 if (isDebug) {
                     descStr += "<p>";
+                    descStr += "****DEBUG BEGIN****";
+                    descStr += "<p>";
                     descStr += "Sign type: " + sign.signType || "NULL";
                     descStr += "<p>";
                     descStr += "availability: " + (sign.availability ? sign.availability.coverage : "NULL");
                     descStr += "<p>";
                     descStr += "overlaps: " + (sign.availability ? sign.availability.overlaps : "NULL");
+                    descStr += "<p>";
+                    descStr += "Sign desc time ranges: " + sign.signTimeRanges || "NULL";
+                    descStr += "<p>";
+                    descStr += "****DEBUG END****";
                 }
             });
 

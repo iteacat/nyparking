@@ -190,12 +190,22 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
                 var interval = toInterval(nowInEpoch, durationInMinutes);
                 console.log('Calculated interval: ', interval);
 
+                var filteredItems = [];
                 items.forEach(function(item) {
+                    // Skip description that doesn't have sign type
+                    if (!config.isDebug && !item.signType) {
+                        return;
+                    }
+
                     var intervalResult = findInterval(item.signTimeRanges, interval);
                     item.availability = intervalResult;
-                    if (item.signTimeRanges)
+                    if (item.signTimeRanges && config.isDebug === false)
                         delete item.signTimeRanges;
+
+                    filteredItems.push(item);
                 })
+
+                items = filteredItems;
 
                 var dataByLoc = _.chain(items)
                     .groupBy(function(each) {
