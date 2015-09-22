@@ -85,11 +85,15 @@ mapModule.factory('mapDao', function ($resource) {
                     descStr += "<p>";
                     descStr += "Sign type: " + sign.signType || "NULL";
                     descStr += "<p>";
+                    descStr += "Sign desc: " + sign.desc || "NULL";
+                    descStr += "<p>";
                     descStr += "availability: " + (sign.availability ? sign.availability.coverage : "NULL");
                     descStr += "<p>";
                     descStr += "overlaps: " + (sign.availability ? sign.availability.overlaps : "NULL");
                     descStr += "<p>";
                     descStr += "Sign desc time ranges: " + sign.signTimeRanges || "NULL";
+                    descStr += "<p>";
+                    descStr += "Current query interval: " + JSON.stringify(sign.queryInterval) || "NULL";
                     descStr += "<p>";
                     descStr += "****DEBUG END****";
                 }

@@ -199,8 +199,14 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
 
                     var intervalResult = findInterval(item.signTimeRanges, interval);
                     item.availability = intervalResult;
-                    if (item.signTimeRanges && config.isDebug === false)
+
+                    if (config.isDebug) {
+                        item.queryInterval = interval;
+                    }
+
+                    if (item.signTimeRanges && config.isDebug === false) {
                         delete item.signTimeRanges;
+                    }
 
                     filteredItems.push(item);
                 })
@@ -362,6 +368,7 @@ var updateMarkerType = function(dataByLoc) {
         var hasRed = false;
         var hasBlue = false;
         var isFullBlue = false;
+        var isHourParkingSignTypeOnly = true;
 
         eachLoc.forEach(function(eachSign) {
             //console.log(JSON.stringify(eachSign));
@@ -404,16 +411,25 @@ var updateMarkerType = function(dataByLoc) {
                     isFullBlue = true;
                 }
             }
+
+            if (eachSign.signType !== SIGN_TYPE.HOUR_PARKING && eachSign.signType !== SIGN_TYPE.HMP) {
+                isHourParkingSignTypeOnly = false;
+            }
         });
 
         if (hasGreen) {
-            locColor = SIGN_COLOR.GREEN;
+            if (hasBlue) {
+                locColor = SIGN_COLOR.BLUE;
+            } else {
+                locColor = SIGN_COLOR.GREEN;
+            }
         } else if (hasRed) {
             locColor = SIGN_COLOR.RED;
-        }
-
-        if (hasBlue && hasGreen || (hasBlue && isFullBlue)) {
+        } else if (hasBlue) {
             locColor = SIGN_COLOR.BLUE;
+        } else if (isHourParkingSignTypeOnly) {
+            // no green, no red and no blue but HOUR_PARKING - consider it as okay to park
+            locColor = SIGN_COLOR.GREEN;
         }
 
         dataByLocResult.push({locColor: locColor, signs: eachLoc});

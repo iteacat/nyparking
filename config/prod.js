@@ -19,4 +19,6 @@ module.exports = {
     ,appConfig: {
         port: 80
     }
+
+    ,isDebug: false
 };
