@@ -52,17 +52,17 @@ var SIGN_COLOR = {
  * the same time, then should red. If there ain't other color at the same time, and if the signTimeCoverage is COVER_FULL,
  * then show blue. Otherwise, show NONE.
  */
-var getSignColor = function(signTimeCoverage, signType) {
+var getSignColor = function (signTimeCoverage, signType) {
     if (!signTimeCoverage || !signType) {
     }
 
     var color = SIGN_COLOR.NONE;
 
-    switch(signType) {
+    switch (signType) {
         case SIGN_TYPE.NO_PARKING:
         case SIGN_TYPE.NO_STANDING:
         case SIGN_TYPE.NO_STOPPING:
-            switch(signTimeCoverage) {
+            switch (signTimeCoverage) {
                 case SIGN_TIME_COVERAGE.COVER_FULL:
                 case SIGN_TIME_COVERAGE.COVER_HEAD:
                 case SIGN_TIME_COVERAGE.COVER_TAIL:
@@ -70,7 +70,7 @@ var getSignColor = function(signTimeCoverage, signType) {
                     color = SIGN_COLOR.RED;
                     break;
                 case SIGN_TIME_COVERAGE.MISS:
-                    color = SIGN_COLOR.GREEN;
+                    color = SIGN_COLOR.NONE;
                     break;
                 default:
                     color = SIGN_COLOR.NONE;
@@ -78,7 +78,7 @@ var getSignColor = function(signTimeCoverage, signType) {
             break;
         case SIGN_TYPE.HOUR_PARKING:
         case SIGN_TYPE.HMP:
-            switch(signTimeCoverage) {
+            switch (signTimeCoverage) {
                 case SIGN_TIME_COVERAGE.COVER_FULL:
                 case SIGN_TIME_COVERAGE.COVER_HEAD:
                 case SIGN_TIME_COVERAGE.COVER_TAIL:
@@ -109,7 +109,7 @@ var sql = "set @center=point(?, ?);" +
     "SQRT(POW( ABS( X(location) - X(@center)), 2) + POW( ABS(Y(location) - Y(@center)), 2 )) AS distance " +
     " FROM nyparking_signs " +
     " WHERE Intersects(location, GeomFromText(@bbox) ) " +
-    //" AND SQRT(POW( ABS( X(location) - X(@center)), 2) + POW( ABS(Y(location) - Y(@center)), 2 )) < @radius " +
+        //" AND SQRT(POW( ABS( X(location) - X(@center)), 2) + POW( ABS(Y(location) - Y(@center)), 2 )) < @radius " +
     "GROUP BY location";
 
 function getSigns(x, y, radius, callback) {
@@ -137,7 +137,7 @@ function getSigns(x, y, radius, callback) {
     });
 };
 
-var normalizeLocation = function(x, y, radius) {
+var normalizeLocation = function (x, y, radius) {
     if (radius === null)
         radius = default_radius;
     x = x + 0.0025;
@@ -149,7 +149,7 @@ var normalizeLocation = function(x, y, radius) {
     };
 }
 
-var toInterval = function(nowInEpoch, durationInMinutes) {
+var toInterval = function (nowInEpoch, durationInMinutes) {
     var interval = {};
     var today = moment(nowInEpoch);
     console.log('debug - today: ', today);
@@ -162,7 +162,7 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
     console.log('getSignsWithTime', x, y, radius, nowInEpoch, durationInMinutes);
     var location = normalizeLocation(x, y, radius);
 
-    mongoDao.getDb(function(err, db) {
+    mongoDao.getDb(function (err, db) {
         if (err) {
             logger.error('Failed to get db: ', location.x, location.y, location.radius, err);
             return callback(err);
@@ -181,8 +181,8 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
                         ]
                     }
                 }
-            }).toArray(function(err, items) {
-                if (err)  {
+            }).toArray(function (err, items) {
+                if (err) {
                     logger.error('Failed to query: ', x, y, location.radius, err);
                     return callback(err);
                 }
@@ -191,7 +191,7 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
                 console.log('Calculated interval: ', interval);
 
                 var filteredItems = [];
-                items.forEach(function(item) {
+                items.forEach(function (item) {
                     // Skip description that doesn't have sign type
                     if (!config.isDebug && !item.signType) {
                         return;
@@ -214,11 +214,11 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
                 items = filteredItems;
 
                 var dataByLoc = _.chain(items)
-                    .groupBy(function(each) {
+                    .groupBy(function (each) {
                         return each.loc.coordinates;
                     })
                     .pairs()
-                    .map(function(each) {
+                    .map(function (each) {
                         return each[1];
                     })
                     .value();
@@ -341,8 +341,31 @@ var findInterval = function (intervals, interval) {
     }
 };
 
+/**
+ * Helper function to covert direction to code
+ * 0 - both; 1 - left, west or north; 2 - right, east or south
+ * @param direction
+ */
+var directionToCode = function (direction) {
+    switch (direction) {
+        case 'N/S':
+        case 'E/W':
+            return 0;
+        case 'L':
+        case 'W':
+        case 'N':
+            return 1;
+        case 'R':
+        case 'E':
+        case 'S':
+            return 2;
+        default:
+            return 0;
+    }
+}
+
 /*
-dataByLoc sample:
+ dataByLoc sample:
  [ { _id: 55a867ead667fd4a51d20daf,
  loc: { type: 'Point', coordinates: [Object] },
  boro: 'Q',
@@ -355,22 +378,25 @@ dataByLoc sample:
  signHour: null,
  availability: { coverage: 'red', overlaps: [] } } ]
  */
-var updateMarkerType = function(dataByLoc) {
+var updateMarkerType = function (dataByLoc) {
     if (!dataByLoc)
         return;
 
     var dataByLocResult = [];
 
-    dataByLoc.forEach(function(eachLoc) {
+    dataByLoc.forEach(function (eachLoc) {
         //console.log('===========');
-        locColor = SIGN_COLOR.NONE;
-        var hasGreen = false;
-        var hasRed = false;
-        var hasBlue = false;
-        var isFullBlue = false;
-        var isHourParkingSignTypeOnly = true;
+        locColor = [SIGN_COLOR.NONE, SIGN_COLOR.NONE, SIGN_COLOR.NONE];
 
-        eachLoc.forEach(function(eachSign) {
+        // 0 - both; 1 - left, west or north; 2 - right, east or south
+        var hasRed = [false, false, false];
+        var hasBlue = [false, false, false];
+        var isFullBlue = [false, false, false];
+
+        var hasDirection = [false, false, false];
+
+        eachLoc.forEach(function (eachSign) {
+            hasDirection[directionToCode(eachSign.arrow)] = true;
             //console.log(JSON.stringify(eachSign));
             var direction = "Direction: ";
             switch (eachSign.arrow) {
@@ -401,55 +427,101 @@ var updateMarkerType = function(dataByLoc) {
             }
             eachSign.direction = direction;
             eachSign.color = getSignColor(eachSign.availability === null ? null : eachSign.availability.coverage, eachSign.signType);
-            if (eachSign.color === SIGN_COLOR.GREEN) {
-                hasGreen = true;
-            } else if (eachSign.color === SIGN_COLOR.RED) {
-                hasRed = true;
+            if (eachSign.color === SIGN_COLOR.RED) {
+                hasRed[directionToCode(eachSign.arrow)] = true;
             } else if (eachSign.color === SIGN_COLOR.BLUE) {
-                hasBlue = true;
+                hasBlue[directionToCode(eachSign.arrow)] = true;
                 if (eachSign.availability.coverage === SIGN_TIME_COVERAGE.COVER_FULL) {
-                    isFullBlue = true;
+                    isFullBlue[directionToCode(eachSign.arrow)] = true;
                 }
-            }
-
-            if (eachSign.signType !== SIGN_TYPE.HOUR_PARKING && eachSign.signType !== SIGN_TYPE.HMP) {
-                isHourParkingSignTypeOnly = false;
             }
         });
 
-        if (hasGreen) {
-            if (hasBlue) {
-                locColor = SIGN_COLOR.BLUE;
-            } else {
-                locColor = SIGN_COLOR.GREEN;
+        [0, 1, 2].forEach(function (index) {
+            if (!hasDirection[index]) {
+                return;
             }
-        } else if (hasRed) {
-            locColor = SIGN_COLOR.RED;
-        } else if (hasBlue) {
-            locColor = SIGN_COLOR.BLUE;
-        } else if (isHourParkingSignTypeOnly) {
-            // no green, no red and no blue but HOUR_PARKING - consider it as okay to park
-            locColor = SIGN_COLOR.GREEN;
+            if (!hasRed[index]) {
+                if (hasBlue[index]) {
+                    locColor[index] = SIGN_COLOR.BLUE;
+                } else {
+                    locColor[index] = SIGN_COLOR.GREEN;
+                }
+            } else {
+                locColor[index] = SIGN_COLOR.RED;
+            }
+        });
+
+        var finalColor = SIGN_COLOR.RED;
+        var finalHasBlue = false;
+        var finalHasGreen = false;
+        [0,1,2].forEach(function(index) {
+            if (!hasDirection[index]) {
+                return;
+            }
+            if (locColor[index] === SIGN_COLOR.BLUE) {
+                finalHasBlue = true;
+            } else if (locColor[index] === SIGN_COLOR.GREEN) {
+                finalHasGreen = true;
+            }
+        });
+
+        if (finalHasBlue) {
+            finalColor = SIGN_COLOR.BLUE;
+        } else if (finalHasGreen) {
+            finalColor = SIGN_COLOR.GREEN;
+        } else {
+            finalColor = SIGN_COLOR.RED;
         }
 
-        dataByLocResult.push({locColor: locColor, signs: eachLoc});
+        dataByLocResult.push({locColor: finalColor, signs: eachLoc});
     });
 
     return dataByLocResult;
 }
 
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 1, second: 2}), {coverage: SIGN_TIME_COVERAGE.MISS, overlaps: []});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 1, second: 7}), {coverage: SIGN_TIME_COVERAGE.COVER_TAIL, overlaps: [2]});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 5, second: 7}), {coverage: SIGN_TIME_COVERAGE.COVER_FULL, overlaps: [2]});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 6, second: 7}), {coverage: SIGN_TIME_COVERAGE.COVER_FULL, overlaps: [1]});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 8, second: 12}), {coverage: SIGN_TIME_COVERAGE.MISS, overlaps: []});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 5, second: 11}), {coverage: SIGN_TIME_COVERAGE.COVER_HEAD, overlaps: [3]});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 20, 30]], {first: 10, second: 19}), {coverage: SIGN_TIME_COVERAGE.COVER_PARTIAL, overlaps: [5]});
-assert.deepEqual(findInterval([[5, 8], [ 12, 16], [ 17, 30]], {first: 13, second: 23}), {coverage: SIGN_TIME_COVERAGE.MISS, overlaps: []});
-assert.deepEqual(findInterval([[5, 8], [ 12, 17], [ 17, 30]], {first: 13, second: 23}), {coverage: SIGN_TIME_COVERAGE.COVER_FULL, overlaps: [10]});
+assert.deepEqual(findInterval([[5, 8], [12, 17], [20, 30]], {first: 1, second: 2}), {
+    coverage: SIGN_TIME_COVERAGE.MISS,
+    overlaps: []
+});
+assert.deepEqual(findInterval([[5, 8], [12, 17], [20, 30]], {
+    first: 1,
+    second: 7
+}), {coverage: SIGN_TIME_COVERAGE.COVER_TAIL, overlaps: [2]});
+assert.deepEqual(findInterval([[5, 8], [12, 17], [20, 30]], {
+    first: 5,
+    second: 7
+}), {coverage: SIGN_TIME_COVERAGE.COVER_FULL, overlaps: [2]});
+assert.deepEqual(findInterval([[5, 8], [12, 17], [20, 30]], {
+    first: 6,
+    second: 7
+}), {coverage: SIGN_TIME_COVERAGE.COVER_FULL, overlaps: [1]});
+assert.deepEqual(findInterval([[5, 8], [12, 17], [20, 30]], {first: 8, second: 12}), {
+    coverage: SIGN_TIME_COVERAGE.MISS,
+    overlaps: []
+});
+assert.deepEqual(findInterval([[5, 8], [12, 17], [20, 30]], {
+    first: 5,
+    second: 11
+}), {coverage: SIGN_TIME_COVERAGE.COVER_HEAD, overlaps: [3]});
+assert.deepEqual(findInterval([[5, 8], [12, 17], [20, 30]], {
+    first: 10,
+    second: 19
+}), {coverage: SIGN_TIME_COVERAGE.COVER_PARTIAL, overlaps: [5]});
+assert.deepEqual(findInterval([[5, 8], [12, 16], [17, 30]], {
+    first: 13,
+    second: 23
+}), {coverage: SIGN_TIME_COVERAGE.MISS, overlaps: []});
+assert.deepEqual(findInterval([[5, 8], [12, 17], [17, 30]], {
+    first: 13,
+    second: 23
+}), {coverage: SIGN_TIME_COVERAGE.COVER_FULL, overlaps: [10]});
 
 assert.deepEqual(toInterval(moment('201507210100', 'YYYYMMDDHHmm').valueOf(), 30), {first: 1500, second: 1530});
-assert.deepEqual(toInterval(moment('201507211430', 'YYYYMMDDhhmm').valueOf(), 70), {first: 870 + 1440, second: 940 + 1440});
+assert.deepEqual(toInterval(moment('201507211430', 'YYYYMMDDhhmm').valueOf(), 70), {
+    first: 870 + 1440,
+    second: 940 + 1440
+});
 
 module.exports = {
     getSigns: getSigns,
