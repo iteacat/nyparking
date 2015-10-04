@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var signsDao = require('../dao/sign_dao.js');
 var chatDao = require('../dao/chat_dao.js');
-var logger = require('../dao/logger.js');
+var logger = require('../common/logger.js');
 var config = require('../config');
 
 /* GET home page. */
@@ -27,7 +27,7 @@ router.get('/chats.json', function(req, res, next) {
 });
 
 router.get('/', function(req, res, next) {
-    res.sendFile('public/mapchat.html', { root: './' });
+    res.sendFile('public/mapchat.html', { root: process.env.NODE_PATH + '/' });
 });
 
 module.exports = router;

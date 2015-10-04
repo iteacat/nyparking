@@ -2,7 +2,7 @@
  * Created by yin on 4/5/15.
  */
 
-var logger = require('./logger.js');
+var logger = require('../common/logger');
 var mysqlDao = require('../common/mysqlDao');
 var mongoDao = require('../common/mongoDao');
 var config = require('../config');
@@ -124,7 +124,7 @@ function getSigns(x, y, radius, callback) {
             conn.release();
             if (err && err.errno !== 1062) {
 
-                console.error('error writing to db ', err);
+                logger.error('error writing to db ', err);
             }
 
             var ret;
@@ -152,14 +152,14 @@ var normalizeLocation = function (x, y, radius) {
 var toInterval = function (nowInEpoch, durationInMinutes) {
     var interval = {};
     var today = moment(nowInEpoch);
-    console.log('debug - today: ', today);
+    logger.info('debug - today: ', today);
     interval.first = 24 * 60 * (today.isoWeekday() - 1) + today.hour() * 60 + today.minute();
     interval.second = interval.first + durationInMinutes;
     return interval;
 }
 
 function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback) {
-    console.log('getSignsWithTime', x, y, radius, nowInEpoch, durationInMinutes);
+    logger.info('getSignsWithTime', x, y, radius, nowInEpoch, durationInMinutes);
     var location = normalizeLocation(x, y, radius);
 
     mongoDao.getDb(function (err, db) {
@@ -168,7 +168,7 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
             return callback(err);
         }
 
-        console.log('query: ', location);
+        logger.info('query: ', location);
 
         db.collection(config.nyparkingCollection).find(
             {
@@ -188,7 +188,7 @@ function getSignsWithTime(x, y, radius, nowInEpoch, durationInMinutes, callback)
                 }
 
                 var interval = toInterval(nowInEpoch, durationInMinutes);
-                console.log('Calculated interval: ', interval);
+                logger.info('Calculated interval: ', interval);
 
                 var filteredItems = [];
                 items.forEach(function (item) {

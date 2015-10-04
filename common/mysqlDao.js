@@ -5,6 +5,7 @@
 
 var mysql = require('mysql');
 var config = require('../config');
+var logger = require('../common/logger');
 
 var pool  = mysql.createPool(
     config.mysqlConfig
@@ -13,7 +14,7 @@ var pool  = mysql.createPool(
 exports.getConnection = function(callback) {
     pool.getConnection(function(err, connection) {
         if (err)
-            console.error('CAO! Error on getting connection. ');
+            logger.error('CAO! Error on getting connection. ');
         callback(err, connection);
     });
 }

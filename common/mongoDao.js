@@ -5,6 +5,7 @@
 var assert = require('assert');
 var MongoClient = require('mongodb').MongoClient;
 var config = require('../config/index');
+var logger = require('../common/logger');
 var db;
 
 var getDb = function (cb) {
@@ -22,6 +23,9 @@ var getDb = function (cb) {
             mongos: {}
         },
         function (err, database) {
+            if (err) {
+                logger.fatal('Failed to connect mongodb. ', err);
+            }
             assert.equal(err, null, 'mongodb returns error: ' + err);
             db = database;
             return cb(err, db)

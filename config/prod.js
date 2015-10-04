@@ -21,4 +21,6 @@ module.exports = {
     }
 
     ,isDebug: false
+
+    ,logPath: '/var/logs'
 };

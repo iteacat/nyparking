@@ -3,7 +3,7 @@
  */
 
 var bunyan = require("bunyan"); // Bunyan dependency
-
+var config = require('../config');
 
 var logger = bunyan.createLogger({
     name: 'nyparking',
@@ -11,7 +11,7 @@ var logger = bunyan.createLogger({
         {
             type: 'rotating-file',
             level: 'info',
-            path: './log/application.log',  // log INFO and above to a file
+            path:  config.logPath + '/application.log',  // log INFO and above to a file
             peroid: '1d',
             count: 7
         }

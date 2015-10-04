@@ -4,18 +4,25 @@
  * Module dependencies.
  */
 
+var assert = require('assert');
 var app = require('../app');
 var debug = require('debug')('nyparking:server');
 var http = require('http');
 var moment = require('moment');
 var config = require('../config');
+var logger = require('../common/logger');
 
 /**
  * Get port from environment and store in Express.
  */
-console.log(config);
+logger.info(config);
 
-var port = normalizePort(config.appConfig.port || process.argv[2] || '3000');
+// validate required ENVIRONMENT VARIABLES
+assert.notEqual(process.env.NODE_PATH, null, 'NODE_PATH not specified');
+assert.notEqual(process.env.NODE_ENV, null, 'NODE_ENV not specified');
+assert.notEqual(process.env.PORT, null, 'PORT not specified');
+
+var port = normalizePort(process.env.PORT || config.appConfig.port || '3000');
 app.set('port', port);
 
 /**
@@ -68,11 +75,11 @@ function onError(error) {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
+      logger.error(bind + ' requires elevated privileges');
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
+      logger.error(bind + ' is already in use');
       process.exit(1);
       break;
     default:
