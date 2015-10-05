@@ -11,12 +11,6 @@ var all = {
         multipleStatements : true
     }
 
-    ,mongoDbConfig: {
-        baseUrl: 'mongodb://localhost:27017/cat1ny?',
-        poolSize: 100,
-        autoReconnect: true
-    }
-
     ,nyparkingCollection: 'nyparking_signs'
 };
 

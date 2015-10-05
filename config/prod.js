@@ -16,6 +16,12 @@ module.exports = {
         multipleStatements : true
     }
 
+    ,mongoDbConfig: {
+        baseUrl: 'mongodb://cat1ny:27017/cat1ny?',
+        poolSize: 100,
+        autoReconnect: true
+    }
+
     ,appConfig: {
         port: 80
     }
