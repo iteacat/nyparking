@@ -28,5 +28,5 @@ module.exports = {
 
     ,isDebug: true
 
-    ,logPath: './log'
+    ,logPath: './'
 };
